@@ -96,6 +96,20 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-
 .panel-close:hover{color:var(--coral)}
 .panel-body{flex:1;overflow-y:auto;padding:1rem}
 
+/* EQ / Audio Enhancement Panel */
+.eq-section{margin-bottom:1.25rem}
+.eq-title{font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.6rem}
+.eq-row{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem}
+.eq-label{font-size:0.75rem;font-weight:700;color:var(--text);min-width:60px}
+.eq-slider{flex:1;accent-color:var(--coral)}
+.eq-val{font-size:0.75rem;font-weight:800;color:var(--coral);min-width:38px;text-align:right}
+.eq-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0.75rem;background:var(--bg);border:2px solid var(--border);border-radius:var(--r);margin-bottom:0.5rem;cursor:pointer}
+.eq-toggle-row.on{border-color:var(--sky);background:var(--sky-lt)}
+.eq-toggle-label{font-size:0.82rem;font-weight:700;color:var(--text)}
+.eq-toggle-label small{display:block;font-size:0.7rem;color:var(--muted);margin-top:0.1rem}
+.eq-status{font-size:0.7rem;font-weight:800;color:var(--muted)}
+.eq-toggle-row.on .eq-status{color:var(--sky)}
+
 /* Metronome */
 .metro-bpm{font-family:'Fredoka One',cursive;font-size:4rem;text-align:center;color:var(--coral);line-height:1;margin:0.5rem 0 0.1rem}
 .metro-unit{text-align:center;font-size:0.75rem;font-weight:800;color:var(--muted);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em}
@@ -137,7 +151,6 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-
 .key-w:hover,.key-w.pressed{background:var(--coral-lt);border-color:var(--coral)}
 .key-b{width:26px;height:86px;background:#2d3436;border-radius:0 0 7px 7px;cursor:pointer;position:absolute;z-index:2;top:0;transition:background 0.08s;box-shadow:0 4px 6px rgba(0,0,0,0.3)}
 .key-b:hover,.key-b.pressed{background:var(--coral)}
-.piano-octave{font-size:0.7rem;font-weight:800;color:var(--muted);text-align:center;margin-bottom:0.5rem}
 
 /* Sync */
 .sync-drop{border:2px dashed var(--border);border-radius:var(--r);padding:2rem 1rem;text-align:center;color:var(--muted);font-weight:700;font-size:0.9rem;cursor:pointer;transition:all 0.2s;margin-bottom:1rem;display:block}
@@ -202,6 +215,7 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-
       <div class="hero-sub">Music lessons that actually<br>sound like music</div>
       <div class="hero-badges">
         <div class="badge">🎵 Music-grade audio</div>
+        <div class="badge">🎚 EQ + Compression</div>
         <div class="badge">📄 Sheet music + annotation</div>
         <div class="badge">🥁 Built-in metronome</div>
         <div class="badge">🎹 Virtual piano</div>
@@ -223,7 +237,7 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-
         </div>
         <div class="audio-info">
           <strong>🎵 Music Mode</strong>
-          <small>Full-frequency audio — disables noise suppression &amp; echo cancellation</small>
+          <small>Full-frequency · stereo · 256kbps Opus · low latency</small>
         </div>
       </label>
       <button class="btn-enter" onclick="enterRoom()">Enter Room →</button>
@@ -241,10 +255,11 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-
     </div>
   </div>
   <div class="toolbar">
-    <button class="tool-btn" id="tb-metro" onclick="togglePanel('metro')">🥁 Metronome</button>
-    <button class="tool-btn" id="tb-piano" onclick="togglePianoDrawer()">🎹 Piano</button>
-    <button class="tool-btn" id="tb-sync"  onclick="togglePanel('sync')">🎚 Sync Mode</button>
-    <button class="tool-btn" id="tb-pdf"   onclick="togglePanel('pdf')">📄 Sheet Music</button>
+    <button class="tool-btn" id="tb-metro"  onclick="togglePanel('metro')">🥁 Metronome</button>
+    <button class="tool-btn" id="tb-piano"  onclick="togglePianoDrawer()">🎹 Piano</button>
+    <button class="tool-btn" id="tb-sync"   onclick="togglePanel('sync')">🎚 Sync Mode</button>
+    <button class="tool-btn" id="tb-pdf"    onclick="togglePanel('pdf')">📄 Sheet Music</button>
+    <button class="tool-btn" id="tb-eq"     onclick="togglePanel('eq')">🎛 EQ / FX</button>
     <button class="tool-btn" id="tb-screen" onclick="toggleScreen()">🖥 Screen Share</button>
   </div>
   <div class="room-main">
@@ -271,9 +286,9 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-
     </div>
   </div>
   <div class="controls">
-    <button class="ctrl" id="micBtn" onclick="toggleMic()" title="Mute">🎤</button>
-    <button class="ctrl" id="camBtn" onclick="toggleCam()" title="Camera">📷</button>
-    <button class="ctrl end" onclick="endCall()" title="Leave">📵</button>
+    <button class="ctrl" id="micBtn"  onclick="toggleMic()" title="Mute">🎤</button>
+    <button class="ctrl" id="camBtn"  onclick="toggleCam()" title="Camera">📷</button>
+    <button class="ctrl end"          onclick="endCall()"   title="Leave">📵</button>
   </div>
 </div>
 
@@ -295,12 +310,18 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-// STATE
-let socket, localStream, screenStream;
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let socket, localStream, processedStream, screenStream;
 let peerConnections = {};
 let myName='', myRoom='', isMusicMode=false;
 let micMuted=false, camOff=false, screenSharing=false;
 let currentPanel=null;
+
+// Audio processing nodes
+let audioCtxMain=null, sourceNode=null, destNode=null;
+let hpfNode=null, compNode=null, eqLowNode=null, eqMidNode=null, eqHighNode=null;
+let hpfEnabled=true, compEnabled=true, eqEnabled=true;
+let hpfFreq=80, compThreshold=-18, compRatio=3, eqLow=0, eqMid=2, eqHigh=1;
 
 // Metronome
 let audioCtx, metroInterval, metroPlaying=false, bpm=120, beatCount=0, beatsPerBar=4;
@@ -319,10 +340,10 @@ let annotCtx, isDrawing=false, lastX=0, lastY=0;
 const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
 const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
-// LOBBY
+// ─── LOBBY ───────────────────────────────────────────────────────────────────
 async function enterRoom(){
-  myName  = document.getElementById('nameInput').value.trim()||'Musician';
-  myRoom  = document.getElementById('roomInput').value.trim().toLowerCase().replace(/\s+/g,'-')||'main-room';
+  myName   = document.getElementById('nameInput').value.trim()||'Musician';
+  myRoom   = document.getElementById('roomInput').value.trim().toLowerCase().replace(/\s+/g,'-')||'main-room';
   isMusicMode = document.getElementById('musicMode').checked;
   document.getElementById('lobby').style.display='none';
   document.getElementById('room').style.display='flex';
@@ -335,17 +356,105 @@ async function enterRoom(){
   connectSocket();
 }
 
-// MEDIA
+// ─── MEDIA + AUDIO PROCESSING CHAIN ─────────────────────────────────────────
 async function startLocal(){
-  const ac=isMusicMode
-    ?{echoCancellation:false,noiseSuppression:false,autoGainControl:false,sampleRate:48000,channelCount:2}
-    :{echoCancellation:true,noiseSuppression:true,autoGainControl:true};
-  try{
-    localStream=await navigator.mediaDevices.getUserMedia({audio:ac,video:{width:{ideal:1280},height:{ideal:720},facingMode:'user'}});
-    const lv=document.getElementById('localVideo');
-    lv.srcObject=localStream; lv.style.display='block';
+  const ac = isMusicMode
+    ? { echoCancellation:false, noiseSuppression:false, autoGainControl:false,
+        sampleRate:48000, channelCount:2, latency:0 }
+    : { echoCancellation:true,  noiseSuppression:true,  autoGainControl:true };
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: ac,
+      video: { width:{ideal:1280}, height:{ideal:720}, facingMode:'user' }
+    });
+
+    // Build Web Audio processing chain for music mode
+    if(isMusicMode){
+      processedStream = buildAudioChain(localStream);
+    } else {
+      processedStream = localStream;
+    }
+
+    const lv = document.getElementById('localVideo');
+    lv.srcObject = localStream; // local preview uses raw (no double-processing)
+    lv.style.display = 'block';
     document.getElementById('localAvatar').style.display='none';
-  }catch(e){showToast('⚠️ Camera/mic access denied')}
+  } catch(e) {
+    showToast('⚠️ Camera/mic access denied');
+    console.error(e);
+  }
+}
+
+function buildAudioChain(rawStream){
+  audioCtxMain = new (window.AudioContext||window.webkitAudioContext)({ sampleRate:48000, latencyHint:'interactive' });
+  sourceNode   = audioCtxMain.createMediaStreamSource(rawStream);
+  destNode     = audioCtxMain.createMediaStreamDestination();
+
+  // High-pass filter — kill sub-80Hz rumble
+  hpfNode = audioCtxMain.createBiquadFilter();
+  hpfNode.type      = 'highpass';
+  hpfNode.frequency.value = hpfFreq;
+  hpfNode.Q.value   = 0.7;
+
+  // EQ: Low shelf
+  eqLowNode = audioCtxMain.createBiquadFilter();
+  eqLowNode.type    = 'lowshelf';
+  eqLowNode.frequency.value = 250;
+  eqLowNode.gain.value = eqLow;
+
+  // EQ: Presence peak (3kHz — clarity for voice/instrument attack)
+  eqMidNode = audioCtxMain.createBiquadFilter();
+  eqMidNode.type    = 'peaking';
+  eqMidNode.frequency.value = 3000;
+  eqMidNode.Q.value = 1.0;
+  eqMidNode.gain.value = eqMid;
+
+  // EQ: High shelf (air)
+  eqHighNode = audioCtxMain.createBiquadFilter();
+  eqHighNode.type   = 'highshelf';
+  eqHighNode.frequency.value = 10000;
+  eqHighNode.gain.value = eqHigh;
+
+  // Compressor — tame dynamics, not squash them
+  compNode = audioCtxMain.createDynamicsCompressor();
+  compNode.threshold.value = compThreshold;
+  compNode.knee.value      = 6;
+  compNode.ratio.value     = compRatio;
+  compNode.attack.value    = 0.005;
+  compNode.release.value   = 0.15;
+
+  // Chain: source → HPF → EQ Low → EQ Mid → EQ High → Comp → dest
+  sourceNode.connect(hpfNode);
+  hpfNode.connect(eqLowNode);
+  eqLowNode.connect(eqMidNode);
+  eqMidNode.connect(eqHighNode);
+  eqHighNode.connect(compNode);
+  compNode.connect(destNode);
+
+  // Combine processed audio with original video tracks
+  const combined = new MediaStream([
+    ...destNode.stream.getAudioTracks(),
+    ...rawStream.getVideoTracks()
+  ]);
+  return combined;
+}
+
+function rebuildChain(){
+  if(!isMusicMode||!audioCtxMain) return;
+  // Update node params live
+  if(hpfNode){
+    hpfNode.frequency.value = hpfFreq;
+    // bypass by setting gain to passthrough equivalent via disconnect/reconnect isn't trivial
+    // instead we zero the filter effect when disabled
+    hpfNode.frequency.value = hpfEnabled ? hpfFreq : 20;
+  }
+  if(eqLowNode)  eqLowNode.gain.value  = eqEnabled ? eqLow  : 0;
+  if(eqMidNode)  eqMidNode.gain.value  = eqEnabled ? eqMid  : 0;
+  if(eqHighNode) eqHighNode.gain.value = eqEnabled ? eqHigh : 0;
+  if(compNode){
+    compNode.threshold.value = compEnabled ? compThreshold : 0;
+    compNode.ratio.value     = compEnabled ? compRatio     : 1;
+  }
 }
 
 function toggleMic(){
@@ -394,7 +503,7 @@ function stopScreen(){
   showToast('🖥 Screen sharing stopped');
 }
 
-// WEBRTC
+// ─── WEBRTC ──────────────────────────────────────────────────────────────────
 function connectSocket(){
   socket=io();
   socket.on('connect',()=>socket.emit('join-room',{roomId:myRoom,userName:myName}));
@@ -408,18 +517,51 @@ function connectSocket(){
 
 function buildPC(peerId,userName){
   const pc=new RTCPeerConnection(ICE);
-  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+  // Use processed stream (with audio chain) for sending
+  const streamToSend = processedStream || localStream;
+  streamToSend.getTracks().forEach(t=>pc.addTrack(t, streamToSend));
   pc.onicecandidate=({candidate})=>{if(candidate) socket.emit('ice-candidate',{to:peerId,candidate})};
-  pc.ontrack=({streams})=>{tuneOpus(pc);addRemoteTile(peerId,userName,streams[0])};
+  pc.ontrack=({streams})=>{ addRemoteTile(peerId,userName,streams[0]); tuneOpus(pc); };
   pc.onconnectionstatechange=()=>{if(['disconnected','failed'].includes(pc.connectionState)) removePeer(peerId)};
   peerConnections[peerId]=pc; return pc;
 }
 
+// Force Opus stereo + high bitrate via SDP munging
+function mungeSDP(sdp){
+  // Find Opus payload type
+  const opusMatch = sdp.match(/a=rtpmap:(\d+) opus\/48000\/2/);
+  if(!opusMatch) return sdp;
+  const pt = opusMatch[1];
+  // Add/replace fmtp line for Opus
+  const fmtpLine = `a=fmtp:${pt} minptime=10;useinbandfec=1;stereo=1;sprop-stereo=1;maxaveragebitrate=256000`;
+  // Remove existing fmtp for this payload type if present
+  sdp = sdp.replace(new RegExp(`a=fmtp:${pt} .*\r\n`,''), '');
+  // Insert after the rtpmap line
+  sdp = sdp.replace(
+    new RegExp(`(a=rtpmap:${pt} opus\\/48000\\/2\\r\\n)`),
+    `$1${fmtpLine}\r\n`
+  );
+  return sdp;
+}
+
 function tuneOpus(pc){
   pc.getTransceivers().forEach(t=>{
-    if(t.sender.track?.kind==='audio'){
+    if(t.sender?.track?.kind==='audio'){
       const p=t.sender.getParameters();
-      if(p.encodings){p.encodings.forEach(e=>{e.maxBitrate=510000});t.sender.setParameters(p).catch(()=>{})}
+      if(p.encodings){
+        p.encodings.forEach(e=>{
+          e.maxBitrate   = 256000;
+          e.priority     = 'high';
+          e.networkPriority = 'high';
+        });
+        t.sender.setParameters(p).catch(()=>{});
+      }
+    }
+  });
+  // Also set jitter buffer target to minimum if supported
+  pc.getReceivers().forEach(r=>{
+    if(r.track?.kind==='audio' && 'jitterBufferTarget' in r){
+      try{ r.jitterBufferTarget = 20; }catch(e){}
     }
   });
 }
@@ -427,6 +569,7 @@ function tuneOpus(pc){
 async function makeOffer(peerId,userName){
   const pc=buildPC(peerId,userName);
   const offer=await pc.createOffer();
+  if(isMusicMode) offer.sdp = mungeSDP(offer.sdp);
   await pc.setLocalDescription(offer);
   socket.emit('offer',{to:peerId,offer});
 }
@@ -435,6 +578,7 @@ async function makeAnswer(peerId,userName,offer){
   const pc=buildPC(peerId,userName);
   await pc.setRemoteDescription(new RTCSessionDescription(offer));
   const answer=await pc.createAnswer();
+  if(isMusicMode) answer.sdp = mungeSDP(answer.sdp);
   await pc.setLocalDescription(answer);
   socket.emit('answer',{to:peerId,answer});
 }
@@ -469,11 +613,15 @@ function endCall(){
   Object.values(peerConnections).forEach(p=>p.close());
   localStream?.getTracks().forEach(t=>t.stop());
   screenStream?.getTracks().forEach(t=>t.stop());
+  audioCtxMain?.close();
   socket?.disconnect(); stopMetro(); location.reload();
 }
 
-// PANELS
-const PANEL_TITLES={metro:'🥁 Metronome',sync:'🎚 Sync Mode',pdf:'📄 Sheet Music'};
+// ─── PANELS ──────────────────────────────────────────────────────────────────
+const PANEL_TITLES={metro:'🥁 Metronome',sync:'🎚 Sync Mode',pdf:'📄 Sheet Music',eq:'🎛 EQ / FX'};
+// NOTE: 'piano' is intentionally excluded — it uses the bottom drawer, not a side panel
+const PANEL_BUILDERS={metro:buildMetroPanel,sync:buildSyncPanel,pdf:buildPdfPanel,eq:buildEqPanel};
+
 function togglePanel(name){
   const panel=document.getElementById('sidePanel');
   if(currentPanel===name){closePanel();return}
@@ -482,15 +630,131 @@ function togglePanel(name){
   document.getElementById('tb-'+name)?.classList.add('active');
   document.getElementById('panelTitle').textContent=PANEL_TITLES[name]||name;
   document.getElementById('panelBody').innerHTML='';
-  ({metro:buildMetroPanel,piano:buildPianoPanel,sync:buildSyncPanel,pdf:buildPdfPanel}[name])?.();
+  if(PANEL_BUILDERS[name]) PANEL_BUILDERS[name]();
 }
 function closePanel(){
   document.getElementById('sidePanel').classList.remove('open');
-  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tool-btn:not(#tb-piano):not(#tb-screen)').forEach(b=>b.classList.remove('active'));
   currentPanel=null;
 }
 
-// METRONOME
+// ─── EQ / FX PANEL ───────────────────────────────────────────────────────────
+function buildEqPanel(){
+  document.getElementById('panelBody').innerHTML=`
+    <p style="font-size:0.82rem;color:var(--muted);font-weight:700;margin-bottom:1rem;line-height:1.5">
+      ${isMusicMode ? 'Tune your outgoing audio in real time.' : '⚠️ Enable Music Mode in lobby for full EQ control.'}
+    </p>
+
+    <div class="eq-section">
+      <div class="eq-title">Signal Chain</div>
+
+      <div class="eq-toggle-row ${hpfEnabled?'on':''}" id="hpfRow" onclick="toggleHPF()">
+        <div class="eq-toggle-label">🔊 High-Pass Filter
+          <small>Cuts low-end rumble & handling noise</small>
+        </div>
+        <span class="eq-status" id="hpfStatus">${hpfEnabled?'ON':'OFF'}</span>
+      </div>
+      <div class="eq-row" style="margin-bottom:1rem">
+        <span class="eq-label">Cutoff</span>
+        <input type="range" class="eq-slider" min="40" max="200" value="${hpfFreq}" oninput="setHPF(this.value)"/>
+        <span class="eq-val" id="hpfVal">${hpfFreq}Hz</span>
+      </div>
+
+      <div class="eq-toggle-row ${compEnabled?'on':''}" id="compRow" onclick="toggleComp()">
+        <div class="eq-toggle-label">🎚 Compressor
+          <small>Evens out dynamics — great for singers</small>
+        </div>
+        <span class="eq-status" id="compStatus">${compEnabled?'ON':'OFF'}</span>
+      </div>
+      <div class="eq-row">
+        <span class="eq-label">Threshold</span>
+        <input type="range" class="eq-slider" min="-40" max="0" value="${compThreshold}" oninput="setComp('threshold',this.value)"/>
+        <span class="eq-val" id="compThreshVal">${compThreshold}dB</span>
+      </div>
+      <div class="eq-row" style="margin-bottom:1rem">
+        <span class="eq-label">Ratio</span>
+        <input type="range" class="eq-slider" min="1" max="10" step="0.5" value="${compRatio}" oninput="setComp('ratio',this.value)"/>
+        <span class="eq-val" id="compRatioVal">${compRatio}:1</span>
+      </div>
+    </div>
+
+    <div class="eq-section">
+      <div class="eq-toggle-row ${eqEnabled?'on':''}" id="eqRow" onclick="toggleEQ()">
+        <div class="eq-toggle-label">🎸 3-Band EQ
+          <small>Low shelf · Presence peak · High shelf</small>
+        </div>
+        <span class="eq-status" id="eqStatus">${eqEnabled?'ON':'OFF'}</span>
+      </div>
+      <div class="eq-row">
+        <span class="eq-label">Low 250Hz</span>
+        <input type="range" class="eq-slider" min="-12" max="12" step="0.5" value="${eqLow}" oninput="setEQ('low',this.value)"/>
+        <span class="eq-val" id="eqLowVal">${eqLow>0?'+':''}${eqLow}dB</span>
+      </div>
+      <div class="eq-row">
+        <span class="eq-label">Mid 3kHz</span>
+        <input type="range" class="eq-slider" min="-12" max="12" step="0.5" value="${eqMid}" oninput="setEQ('mid',this.value)"/>
+        <span class="eq-val" id="eqMidVal">${eqMid>0?'+':''}${eqMid}dB</span>
+      </div>
+      <div class="eq-row">
+        <span class="eq-label">Air 10kHz</span>
+        <input type="range" class="eq-slider" min="-12" max="12" step="0.5" value="${eqHigh}" oninput="setEQ('high',this.value)"/>
+        <span class="eq-val" id="eqHighVal">${eqHigh>0?'+':''}${eqHigh}dB</span>
+      </div>
+    </div>
+    <p style="font-size:0.7rem;color:var(--muted);font-weight:700;line-height:1.4">
+      💡 Defaults: HPF at 80Hz, +2dB presence, +1dB air, gentle 3:1 compression — good starting point for acoustic instruments & voice.
+    </p>`;
+}
+
+function toggleHPF(){
+  hpfEnabled=!hpfEnabled;
+  document.getElementById('hpfRow').classList.toggle('on',hpfEnabled);
+  document.getElementById('hpfStatus').textContent=hpfEnabled?'ON':'OFF';
+  rebuildChain();
+}
+function setHPF(v){
+  hpfFreq=+v;
+  document.getElementById('hpfVal').textContent=v+'Hz';
+  if(hpfNode&&hpfEnabled) hpfNode.frequency.value=hpfFreq;
+}
+function toggleComp(){
+  compEnabled=!compEnabled;
+  document.getElementById('compRow').classList.toggle('on',compEnabled);
+  document.getElementById('compStatus').textContent=compEnabled?'ON':'OFF';
+  rebuildChain();
+}
+function setComp(param,v){
+  if(param==='threshold'){
+    compThreshold=+v;
+    document.getElementById('compThreshVal').textContent=v+'dB';
+    if(compNode&&compEnabled) compNode.threshold.value=compThreshold;
+  } else {
+    compRatio=+v;
+    document.getElementById('compRatioVal').textContent=v+':1';
+    if(compNode&&compEnabled) compNode.ratio.value=compRatio;
+  }
+}
+function toggleEQ(){
+  eqEnabled=!eqEnabled;
+  document.getElementById('eqRow').classList.toggle('on',eqEnabled);
+  document.getElementById('eqStatus').textContent=eqEnabled?'ON':'OFF';
+  rebuildChain();
+}
+function setEQ(band,v){
+  const sign=+v>0?'+':'';
+  if(band==='low'){
+    eqLow=+v; document.getElementById('eqLowVal').textContent=sign+v+'dB';
+    if(eqLowNode&&eqEnabled) eqLowNode.gain.value=eqLow;
+  } else if(band==='mid'){
+    eqMid=+v; document.getElementById('eqMidVal').textContent=sign+v+'dB';
+    if(eqMidNode&&eqEnabled) eqMidNode.gain.value=eqMid;
+  } else {
+    eqHigh=+v; document.getElementById('eqHighVal').textContent=sign+v+'dB';
+    if(eqHighNode&&eqEnabled) eqHighNode.gain.value=eqHigh;
+  }
+}
+
+// ─── METRONOME ────────────────────────────────────────────────────────────────
 function buildMetroPanel(){
   document.getElementById('panelBody').innerHTML=`
     <div class="metro-bpm" id="bpmNum">120</div>
@@ -527,7 +791,7 @@ function startMetro(){
 }
 function stopMetro(){metroPlaying=false;clearInterval(metroInterval);document.querySelectorAll('.beat-dot').forEach(d=>d.classList.remove('on'))}
 
-// PIANO DRAWER
+// ─── PIANO DRAWER ─────────────────────────────────────────────────────────────
 function togglePianoDrawer(){
   const drawer=document.getElementById('piano-drawer');
   const btn=document.getElementById('tb-piano');
@@ -538,7 +802,6 @@ function togglePianoDrawer(){
   btn.classList.add('active');
   if(!pianoCtx) pianoCtx=new (window.AudioContext||window.webkitAudioContext)();
   renderPiano();
-  currentPanel = currentPanel==='piano'?currentPanel:currentPanel; // don't close other panels
 }
 function closePianoDrawer(){
   const drawer=document.getElementById('piano-drawer');
@@ -568,26 +831,50 @@ function renderPiano(){
   }
 }
 function m2f(midi){return 440*Math.pow(2,(midi-69)/12)}
+
+// Richer piano tone: two slightly detuned oscillators + quick attack envelope
 function playNote(freq,el){
   if(!pianoCtx) return;
   el.classList.add('pressed');
-  const osc=pianoCtx.createOscillator(),gain=pianoCtx.createGain();
-  osc.type='triangle'; osc.frequency.value=freq;
-  gain.gain.setValueAtTime(0.4,pianoCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001,pianoCtx.currentTime+1.2);
-  osc.connect(gain);gain.connect(pianoCtx.destination);
-  osc.start();osc.stop(pianoCtx.currentTime+1.2);
+
+  const gain = pianoCtx.createGain();
+  gain.gain.setValueAtTime(0, pianoCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.35, pianoCtx.currentTime + 0.008); // quick attack
+  gain.gain.exponentialRampToValueAtTime(0.001, pianoCtx.currentTime + 1.4);
+  gain.connect(pianoCtx.destination);
+
+  // Osc 1 — slightly below pitch (warmth)
+  const osc1 = pianoCtx.createOscillator();
+  osc1.type = 'triangle';
+  osc1.frequency.value = freq * 0.999;
+
+  // Osc 2 — slightly above pitch (shimmer)
+  const osc2 = pianoCtx.createOscillator();
+  osc2.type = 'sine';
+  osc2.frequency.value = freq * 1.001;
+
+  // Gain balance
+  const g1 = pianoCtx.createGain(); g1.gain.value = 0.6;
+  const g2 = pianoCtx.createGain(); g2.gain.value = 0.4;
+
+  osc1.connect(g1); g1.connect(gain);
+  osc2.connect(g2); g2.connect(gain);
+
+  osc1.start(pianoCtx.currentTime); osc1.stop(pianoCtx.currentTime + 1.4);
+  osc2.start(pianoCtx.currentTime); osc2.stop(pianoCtx.currentTime + 1.4);
+
   setTimeout(()=>el.classList.remove('pressed'),200);
 }
+
 const keyMap={'a':'C4','w':'C#4','s':'D4','e':'D#4','d':'E4','f':'F4','t':'F#4','g':'G4','y':'G#4','h':'A4','u':'A#4','j':'B4','k':'C5'};
 document.addEventListener('keydown',e=>{
-  if(currentPanel!=='piano') return;
+  if(!document.getElementById('piano-drawer').classList.contains('open')) return;
   const note=keyMap[e.key.toLowerCase()]; if(!note) return;
   const oct=parseInt(note.slice(-1)),nm=note.slice(0,-1),midi=NOTES.indexOf(nm)+oct*12+12,freq=m2f(midi);
   document.querySelectorAll('.key-w,.key-b').forEach(k=>{if(Math.abs(+k.dataset.freq-freq)<0.1)playNote(freq,k)});
 });
 
-// SYNC MODE
+// ─── SYNC MODE ────────────────────────────────────────────────────────────────
 function buildSyncPanel(){
   document.getElementById('panelBody').innerHTML=`
     <p style="font-size:0.82rem;color:var(--muted);font-weight:700;margin-bottom:1rem;line-height:1.5">Upload a backing track. Control pitch and tempo — perfect for practice at different speeds or keys.</p>
@@ -639,7 +926,7 @@ function setPitch(v){document.getElementById('pitchVal').textContent=v;if(syncAu
 function setTempo(v){document.getElementById('tempoVal').textContent=(+v).toFixed(2)+'×';if(syncAudio)syncAudio.playbackRate=+v*Math.pow(2,(+document.getElementById('pitchSlider')?.value||0)/12)}
 function fmt(s){const m=Math.floor(s/60);return `${m}:${String(Math.floor(s%60)).padStart(2,'0')}`}
 
-// PDF + ANNOTATION
+// ─── PDF + ANNOTATION ─────────────────────────────────────────────────────────
 function buildPdfPanel(){
   document.getElementById('panelBody').innerHTML=`
     <label class="sync-drop" id="pdfDrop"><input type="file" accept=".pdf,image/*" onchange="loadPdfFile(this)"/>📄 Drop PDF or image here</label>
@@ -734,7 +1021,7 @@ function setAnnotTool(t,btn){annotTool=t;document.querySelectorAll('.pdf-tool').
 function setAnnotColor(c,el){annotColor=c;document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));el.classList.add('active')}
 function clearAnnotation(){if(annotCtx){annotCtx.globalCompositeOperation='source-over';const ac=document.getElementById('annotation-canvas');annotCtx.clearRect(0,0,ac.width,ac.height)}}
 
-// UTILS
+// ─── UTILS ────────────────────────────────────────────────────────────────────
 function copyCode(){
   const url=window.location.origin+'?room='+myRoom;
   navigator.clipboard.writeText(url).then(()=>showToast('🔗 Link copied!')).catch(()=>{navigator.clipboard.writeText(myRoom);showToast('✓ Room code copied!')});
