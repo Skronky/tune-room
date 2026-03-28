@@ -88,8 +88,22 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-
 .tile-muted.show{display:flex}
 .avatar-bg{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;background:linear-gradient(135deg,#fff9f0,#f0f9ff)}
 .avatar-circle{width:72px;height:72px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:1.8rem;color:#fff;box-shadow:0 4px 0 #e05555}
-.side-panel{width:320px;border-left:2px solid var(--border);background:var(--white);display:none;flex-direction:column;flex-shrink:0}
+.side-panel{width:320px;min-width:320px;max-width:320px;border-left:2px solid var(--border);background:var(--white);display:none;flex-direction:column;flex-shrink:0;overflow-y:auto}
 .side-panel.open{display:flex}
+@media(max-width:600px){
+  .side-panel{position:fixed;inset:0;width:100%!important;max-width:100%!important;min-width:0!important;z-index:100;border-left:none;border-top:2px solid var(--border)}
+}
+/* Fullscreen */
+body.is-fullscreen .fs-badge{display:block}
+.fs-badge{display:none;position:fixed;top:0.5rem;right:0.5rem;background:rgba(0,0,0,0.55);color:#fff;font-size:0.7rem;font-weight:800;padding:0.25rem 0.65rem;border-radius:100px;z-index:9998;pointer-events:none;backdrop-filter:blur(4px)}
+/* Mobile tweaks */
+body.is-mobile .room-header{padding:0.5rem 0.75rem}
+body.is-mobile .toolbar{padding:0.4rem 0.75rem;gap:0.3rem}
+body.is-mobile .tool-btn{padding:0.35rem 0.65rem;font-size:0.72rem}
+body.is-mobile .controls{padding:0.65rem 1rem;gap:0.4rem}
+body.is-mobile .ctrl{width:46px;height:46px;font-size:1rem}
+body.is-mobile .ctrl.end{width:52px;height:52px}
+body.is-mobile .video-grid{padding:0.4rem;gap:0.4rem}
 .panel-header{padding:1rem 1.25rem;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .panel-title{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--text)}
 .panel-close{background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--muted);transition:color 0.15s}
@@ -307,10 +321,48 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="fs-badge" id="fsBadge">⛶ Fullscreen</div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-// ─── STATE ───────────────────────────────────────────────────────────────────
+// ─── DEVICE / ENVIRONMENT DETECTION ─────────────────────────────────────────
+const isMobileDevice = () =>
+  /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent)
+  || window.innerWidth <= 600;
+
+function applyDeviceClass(){
+  document.body.classList.toggle('is-mobile', isMobileDevice());
+}
+
+function applyFullscreenClass(){
+  const fs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement);
+  document.body.classList.toggle('is-fullscreen', fs);
+  document.getElementById('fsBadge').textContent = fs ? '⛶ Fullscreen' : '';
+}
+
+// Re-check on resize (handles orientation change on mobile too)
+window.addEventListener('resize', applyDeviceClass);
+document.addEventListener('fullscreenchange', applyFullscreenClass);
+document.addEventListener('webkitfullscreenchange', applyFullscreenClass);
+document.addEventListener('mozfullscreenchange', applyFullscreenClass);
+
+// Double-tap video grid to go fullscreen on mobile
+function setupFullscreenGesture(){
+  let lastTap = 0;
+  document.getElementById('videoGrid').addEventListener('touchend', ()=>{
+    const now = Date.now();
+    if(now - lastTap < 300){
+      if(!document.fullscreenElement){
+        document.documentElement.requestFullscreen?.() || document.documentElement.webkitRequestFullscreen?.();
+      } else {
+        document.exitFullscreen?.() || document.webkitExitFullscreen?.();
+      }
+    }
+    lastTap = now;
+  });
+}
+
+
 let socket, localStream, processedStream, screenStream;
 let peerConnections = {};
 let myName='', myRoom='', isMusicMode=false;
@@ -1031,9 +1083,11 @@ function rndColor(){return['#ff6b6b','#4ecdc4','#ffe66d','#c77dff','#ff9f43','#a
 function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
 
 window.onload=()=>{
+  applyDeviceClass();
   document.getElementById('nameInput').focus();
   const p=new URLSearchParams(location.search);
   if(p.get('room')) document.getElementById('roomInput').value=p.get('room');
+  setupFullscreenGesture();
 };
 </script>
 </body>
