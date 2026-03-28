@@ -265,6 +265,7 @@ body.is-mobile .video-grid{padding:0.4rem;gap:0.4rem}
     <div class="room-logo">Tune<span>room</span> 🎵</div>
     <div class="room-code" onclick="copyCode()" id="codeDisplay">🔗 room</div>
     <div style="display:flex;align-items:center;gap:0.5rem;margin-left:auto">
+      <div id="latencyDisplay" style="font-size:0.75rem;font-weight:700;padding:0.25rem 0.6rem;background:var(--bg);border:2px solid var(--border);border-radius:100px;display:none"></div>
       <div class="audio-pill" id="audioPill">VOICE</div>
     </div>
   </div>
@@ -389,7 +390,19 @@ let pdfDoc=null, pdfPageNum=1, pdfPageCount=0;
 let annotColor='#ff6b6b', annotTool='pen';
 let annotCtx, isDrawing=false, lastX=0, lastY=0;
 
-const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
+const ICE={
+  iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'stun:stun1.l.google.com:19302'},
+    {urls:'stun:stun2.l.google.com:19302'},
+    {urls:'stun:stun3.l.google.com:19302'},
+    {urls:'stun:stun4.l.google.com:19302'},
+    {urls:'stun:stun.cloudflare.com:3478'},
+  ],
+  iceCandidatePoolSize: 10,
+  bundlePolicy: 'max-bundle',
+  rtcpMuxPolicy: 'require',
+};
 const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
 // ─── LOBBY ───────────────────────────────────────────────────────────────────
@@ -438,9 +451,18 @@ async function startLocal(){
 }
 
 function buildAudioChain(rawStream){
-  audioCtxMain = new (window.AudioContext||window.webkitAudioContext)({ sampleRate:48000, latencyHint:'interactive' });
-  sourceNode   = audioCtxMain.createMediaStreamSource(rawStream);
-  destNode     = audioCtxMain.createMediaStreamDestination();
+  // 'playback' = browser optimizes for throughput not latency on output
+  // For sending we want 'interactive' = lowest input latency
+  audioCtxMain = new (window.AudioContext||window.webkitAudioContext)({
+    sampleRate: 48000,
+    latencyHint: 'interactive',
+  });
+
+  // Resume context immediately (some browsers suspend by default)
+  if(audioCtxMain.state === 'suspended') audioCtxMain.resume();
+
+  sourceNode = audioCtxMain.createMediaStreamSource(rawStream);
+  destNode   = audioCtxMain.createMediaStreamDestination();
 
   // High-pass filter — kill sub-80Hz rumble
   hpfNode = audioCtxMain.createBiquadFilter();
@@ -569,29 +591,39 @@ function connectSocket(){
 
 function buildPC(peerId,userName){
   const pc=new RTCPeerConnection(ICE);
-  // Use processed stream (with audio chain) for sending
   const streamToSend = processedStream || localStream;
   streamToSend.getTracks().forEach(t=>pc.addTrack(t, streamToSend));
   pc.onicecandidate=({candidate})=>{if(candidate) socket.emit('ice-candidate',{to:peerId,candidate})};
   pc.ontrack=({streams})=>{ addRemoteTile(peerId,userName,streams[0]); tuneOpus(pc); };
-  pc.onconnectionstatechange=()=>{if(['disconnected','failed'].includes(pc.connectionState)) removePeer(peerId)};
+  pc.onconnectionstatechange=()=>{
+    if(pc.connectionState === 'connected') startLatencyMeter(pc);
+    if(['disconnected','failed'].includes(pc.connectionState)) removePeer(peerId);
+  };
   peerConnections[peerId]=pc; return pc;
 }
 
-// Force Opus stereo + high bitrate via SDP munging
+// Force Opus stereo + high bitrate + low ptime via SDP munging
 function mungeSDP(sdp){
-  // Find Opus payload type
   const opusMatch = sdp.match(/a=rtpmap:(\d+) opus\/48000\/2/);
   if(!opusMatch) return sdp;
   const pt = opusMatch[1];
-  // Add/replace fmtp line for Opus
-  const fmtpLine = `a=fmtp:${pt} minptime=10;useinbandfec=1;stereo=1;sprop-stereo=1;maxaveragebitrate=256000`;
-  // Remove existing fmtp for this payload type if present
+  // stereo=1 — stereo decode
+  // sprop-stereo=1 — stereo encode
+  // maxaveragebitrate=256000 — 256kbps
+  // useinbandfec=1 — forward error correction
+  // usedtx=0 — disable discontinuous transmission (keeps stream flowing, lower latency feel)
+  // cbr=1 — constant bitrate (more predictable latency than VBR)
+  const fmtpLine = `a=fmtp:${pt} minptime=10;useinbandfec=1;stereo=1;sprop-stereo=1;maxaveragebitrate=256000;usedtx=0;cbr=1`;
   sdp = sdp.replace(new RegExp(`a=fmtp:${pt} .*\r\n`,''), '');
-  // Insert after the rtpmap line
   sdp = sdp.replace(
     new RegExp(`(a=rtpmap:${pt} opus\\/48000\\/2\\r\\n)`),
     `$1${fmtpLine}\r\n`
+  );
+  // Force ptime=10 (10ms packet size, default is 20ms — halves packetization delay)
+  // Insert after the fmtp line
+  sdp = sdp.replace(
+    new RegExp(`(${fmtpLine.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\r\\n)`),
+    `$1a=ptime:10\r\na=maxptime:10\r\n`
   );
   return sdp;
 }
@@ -602,20 +634,64 @@ function tuneOpus(pc){
       const p=t.sender.getParameters();
       if(p.encodings){
         p.encodings.forEach(e=>{
-          e.maxBitrate   = 256000;
-          e.priority     = 'high';
+          e.maxBitrate      = 256000;
+          e.priority        = 'high';
           e.networkPriority = 'high';
         });
         t.sender.setParameters(p).catch(()=>{});
       }
     }
   });
-  // Also set jitter buffer target to minimum if supported
+  // Minimize jitter buffer on receivers — browser floors this at ~20ms
   pc.getReceivers().forEach(r=>{
-    if(r.track?.kind==='audio' && 'jitterBufferTarget' in r){
-      try{ r.jitterBufferTarget = 20; }catch(e){}
+    if(r.track?.kind==='audio'){
+      if('jitterBufferTarget' in r){
+        try{ r.jitterBufferTarget = 0; }catch(e){} // 0 = let browser use minimum
+      }
+      if('jitterBufferDelayHint' in r){
+        try{ r.jitterBufferDelayHint = 0; }catch(e){}
+      }
     }
   });
+}
+
+// RTCPeerConnection stats-based latency meter
+let latencyInterval = null;
+function startLatencyMeter(pc){
+  if(latencyInterval) clearInterval(latencyInterval);
+  latencyInterval = setInterval(async ()=>{
+    if(!pc || pc.connectionState !== 'connected') return;
+    try{
+      const stats = await pc.getStats();
+      stats.forEach(report=>{
+        if(report.type === 'candidate-pair' && report.state === 'succeeded' && report.currentRoundTripTime != null){
+          const rtt = Math.round(report.currentRoundTripTime * 1000);
+          updateLatencyDisplay(rtt);
+        }
+      });
+    }catch(e){}
+  }, 1000);
+}
+
+function stopLatencyMeter(){
+  clearInterval(latencyInterval);
+  latencyInterval = null;
+}
+
+function updateLatencyDisplay(rttMs){
+  const el = document.getElementById('latencyDisplay');
+  if(el){
+    el.style.display = 'block';
+    const color = rttMs < 50 ? '#4ecdc4' : rttMs < 120 ? '#b8a000' : '#ff6b6b';
+    el.innerHTML = `<span style="color:${color};font-weight:800">${rttMs}ms</span>`;
+  }
+  // Also update EQ panel if open
+  const eqEl = document.getElementById('eqLatencyVal');
+  if(eqEl){
+    const color = rttMs < 50 ? 'var(--sky)' : rttMs < 120 ? '#b8a000' : 'var(--coral)';
+    const label = rttMs < 50 ? '🟢 Great' : rttMs < 120 ? '🟡 OK' : '🔴 High';
+    eqEl.innerHTML = `<span style="color:${color}">${rttMs}ms RTT</span> <span style="font-size:0.75rem;color:var(--muted)">${label}</span>`;
+  }
 }
 
 async function makeOffer(peerId,userName){
@@ -657,7 +733,11 @@ function addRemoteTile(peerId,userName,stream){
 function removePeer(peerId){
   peerConnections[peerId]?.close(); delete peerConnections[peerId];
   document.getElementById('tile-'+peerId)?.remove();
-  if(!Object.keys(peerConnections).length) document.getElementById('waitingTile').style.display='flex';
+  if(!Object.keys(peerConnections).length){
+    document.getElementById('waitingTile').style.display='flex';
+    document.getElementById('latencyDisplay').style.display='none';
+    stopLatencyMeter();
+  }
   showToast('👋 Someone left');
 }
 
@@ -755,7 +835,18 @@ function buildEqPanel(){
     </div>
     <p style="font-size:0.7rem;color:var(--muted);font-weight:700;line-height:1.4">
       💡 Defaults: HPF at 80Hz, +2dB presence, +1dB air, gentle 3:1 compression — good starting point for acoustic instruments & voice.
-    </p>`;
+    </p>
+    <div style="margin-top:1rem;padding:0.75rem;background:var(--bg);border:2px solid var(--border);border-radius:var(--r)">
+      <div class="eq-title" style="margin-bottom:0.5rem">📡 Live Latency</div>
+      <div id="eqLatencyVal" style="font-size:1.1rem;font-weight:800;color:var(--coral);margin-bottom:0.4rem">Waiting for peer...</div>
+      <div style="font-size:0.7rem;color:var(--muted);font-weight:700;line-height:1.6">
+        Measured live via WebRTC stats (network RTT).<br>
+        Total felt latency ≈ RTT + ~20ms jitter buffer + ~5ms audio chain.<br>
+        <span style="color:var(--sky)">🟢 &lt;50ms</span> great &nbsp;
+        <span style="color:#b8a000">🟡 50–120ms</span> ok &nbsp;
+        <span style="color:var(--coral)">🔴 &gt;120ms</span> noticeable
+      </div>
+    </div>`;
 }
 
 function toggleHPF(){
