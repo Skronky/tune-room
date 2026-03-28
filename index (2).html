@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tuneroom 🎵</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --coral:    #ff6b6b;
+  --coral-lt: #fff0f0;
+  --sky:      #4ecdc4;
+  --sky-lt:   #e8faf9;
+  --sun:      #ffe66d;
+  --sun-lt:   #fffbe6;
+  --mint:     #a8e6cf;
+  --purple:   #c77dff;
+  --bg:       #f7f9fc;
+  --white:    #ffffff;
+  --card:     #ffffff;
+  --border:   #e8edf3;
+  --text:     #2d3436;
+  --muted:    #94a3b8;
+  --shadow:   0 4px 20px rgba(0,0,0,0.08);
+  --shadow-lg:0 8px 40px rgba(0,0,0,0.12);
+  --r:        16px;
+  --r-lg:     24px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* LOBBY */
+#lobby{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:linear-gradient(135deg,#fff9f0 0%,#f0f9ff 50%,#f9f0ff 100%);position:relative;overflow:hidden}
+.note-bg{position:absolute;font-size:1.8rem;top:5%;left:0;right:0;letter-spacing:3rem;opacity:0.07;white-space:nowrap;overflow:hidden;animation:floatnotes 20s linear infinite;pointer-events:none}
+@keyframes floatnotes{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.lobby-wrap{display:grid;grid-template-columns:1fr 1fr;gap:3rem;max-width:900px;width:100%;align-items:center;position:relative;z-index:1}
+@media(max-width:680px){.lobby-wrap{grid-template-columns:1fr}.lobby-hero{display:none}}
+.hero-icon{font-size:6rem;display:block;animation:bounce 2s ease-in-out infinite;margin-bottom:1rem;text-align:center}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.hero-title{font-family:'Fredoka One',cursive;font-size:3.2rem;color:var(--coral);line-height:1;margin-bottom:0.5rem;text-align:center}
+.hero-title span{color:var(--sky)}
+.hero-sub{font-size:1rem;color:var(--muted);font-weight:600;line-height:1.5;text-align:center}
+.hero-badges{display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin-top:1.5rem}
+.badge{background:var(--white);border:2px solid var(--border);border-radius:100px;padding:0.35rem 0.85rem;font-size:0.8rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:0.3rem}
+.lobby-card{background:var(--white);border-radius:var(--r-lg);padding:2.5rem;box-shadow:var(--shadow-lg);border:2px solid var(--border)}
+.card-title{font-family:'Fredoka One',cursive;font-size:1.6rem;margin-bottom:0.25rem;color:var(--text)}
+.card-sub{font-size:0.85rem;color:var(--muted);margin-bottom:2rem;font-weight:600}
+.field-label{font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.4rem}
+.field{width:100%;background:var(--bg);border:2px solid var(--border);border-radius:var(--r);padding:0.85rem 1rem;color:var(--text);font-family:'Nunito',sans-serif;font-size:0.95rem;font-weight:600;outline:none;transition:border-color 0.2s,box-shadow 0.2s;margin-bottom:1rem}
+.field:focus{border-color:var(--coral);box-shadow:0 0 0 4px rgba(255,107,107,0.12)}
+.field::placeholder{color:var(--muted)}
+.audio-row{display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;background:var(--sky-lt);border:2px solid var(--sky);border-radius:var(--r);margin-bottom:1.25rem;cursor:pointer;transition:all 0.2s}
+.audio-row:hover{background:#d4f5f2}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{display:none}
+.toggle label{display:block;width:44px;height:24px;background:#cbd5e1;border-radius:12px;cursor:pointer;transition:background 0.2s;position:relative}
+.toggle label::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform 0.2s;box-shadow:0 2px 4px rgba(0,0,0,0.2)}
+.toggle input:checked+label{background:var(--sky)}
+.toggle input:checked+label::after{transform:translateX(20px)}
+.audio-info strong{font-size:0.88rem;color:var(--text);font-weight:800}
+.audio-info small{display:block;font-size:0.75rem;color:var(--muted);margin-top:0.1rem;font-weight:600}
+.btn-enter{width:100%;padding:1rem;background:var(--coral);border:none;border-radius:var(--r);color:#fff;font-family:'Fredoka One',cursive;font-size:1.15rem;cursor:pointer;transition:all 0.2s;letter-spacing:0.02em;box-shadow:0 4px 0 #e05555;position:relative;top:0}
+.btn-enter:hover{top:-2px;box-shadow:0 6px 0 #e05555}
+.btn-enter:active{top:2px;box-shadow:0 2px 0 #e05555}
+
+/* ROOM */
+#room{display:none;flex-direction:column;height:100vh;background:var(--bg)}
+.room-header{display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1.25rem;background:var(--white);border-bottom:2px solid var(--border);flex-shrink:0;gap:0.75rem}
+.room-logo{font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--coral);white-space:nowrap}
+.room-logo span{color:var(--sky)}
+.room-code{display:flex;align-items:center;gap:0.4rem;background:var(--bg);border:2px solid var(--border);border-radius:100px;padding:0.3rem 0.85rem;font-size:0.8rem;font-weight:800;color:var(--text);cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.room-code:hover{border-color:var(--coral);color:var(--coral)}
+.audio-pill{font-size:0.72rem;font-weight:800;padding:0.3rem 0.75rem;border-radius:100px;border:2px solid;white-space:nowrap}
+.audio-pill.music{color:var(--sky);border-color:var(--sky);background:var(--sky-lt)}
+.audio-pill.voice{color:var(--muted);border-color:var(--border);background:var(--bg)}
+.toolbar{display:flex;align-items:center;gap:0.4rem;overflow-x:auto;padding:0.6rem 1.25rem;background:var(--white);border-bottom:2px solid var(--border);flex-shrink:0}
+.tool-btn{display:flex;align-items:center;gap:0.4rem;padding:0.45rem 0.9rem;border-radius:100px;border:2px solid var(--border);background:var(--bg);color:var(--muted);font-family:'Nunito',sans-serif;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.15s;white-space:nowrap;flex-shrink:0}
+.tool-btn:hover{border-color:var(--coral);color:var(--coral);background:var(--coral-lt)}
+.tool-btn.active{background:var(--coral);border-color:var(--coral);color:#fff}
+.room-main{flex:1;display:flex;overflow:hidden}
+.video-grid{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0.75rem;padding:0.75rem;overflow-y:auto;align-content:start}
+.video-tile{position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--white);border:2px solid var(--border);aspect-ratio:16/9;box-shadow:var(--shadow);transition:box-shadow 0.2s}
+.video-tile:hover{box-shadow:var(--shadow-lg)}
+.video-tile video{width:100%;height:100%;object-fit:cover;display:block}
+.video-tile.local video{transform:scaleX(-1)}
+.tile-name{position:absolute;bottom:0.65rem;left:0.65rem;background:rgba(255,255,255,0.92);backdrop-filter:blur(8px);border-radius:100px;padding:0.25rem 0.65rem;font-size:0.78rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:0.3rem;border:1px solid var(--border)}
+.tile-muted{position:absolute;top:0.65rem;right:0.65rem;background:var(--coral);border-radius:50%;width:30px;height:30px;display:none;align-items:center;justify-content:center;font-size:0.85rem;box-shadow:0 2px 8px rgba(255,107,107,0.4)}
+.tile-muted.show{display:flex}
+.avatar-bg{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;background:linear-gradient(135deg,#fff9f0,#f0f9ff)}
+.avatar-circle{width:72px;height:72px;border-radius:50%;background:var(--coral);display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:1.8rem;color:#fff;box-shadow:0 4px 0 #e05555}
+.side-panel{width:320px;border-left:2px solid var(--border);background:var(--white);display:none;flex-direction:column;flex-shrink:0}
+.side-panel.open{display:flex}
+.panel-header{padding:1rem 1.25rem;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--text)}
+.panel-close{background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--muted);transition:color 0.15s}
+.panel-close:hover{color:var(--coral)}
+.panel-body{flex:1;overflow-y:auto;padding:1rem}
+
+/* Metronome */
+.metro-bpm{font-family:'Fredoka One',cursive;font-size:4rem;text-align:center;color:var(--coral);line-height:1;margin:0.5rem 0 0.1rem}
+.metro-unit{text-align:center;font-size:0.75rem;font-weight:800;color:var(--muted);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em}
+.metro-slider{width:100%;accent-color:var(--coral);margin-bottom:1rem;height:6px}
+.beats-row{display:flex;gap:0.4rem;justify-content:center;margin-bottom:1.25rem}
+.beat-dot{width:14px;height:14px;border-radius:50%;background:var(--border);transition:background 0.05s,transform 0.05s}
+.beat-dot.on{background:var(--coral);transform:scale(1.3)}
+.metro-play{width:100%;padding:0.85rem;border-radius:var(--r);border:none;background:var(--coral);color:#fff;font-family:'Fredoka One',cursive;font-size:1rem;cursor:pointer;transition:all 0.15s;box-shadow:0 4px 0 #e05555;position:relative;top:0}
+.metro-play:hover{top:-2px;box-shadow:0 6px 0 #e05555}
+.metro-play:active{top:2px;box-shadow:0 2px 0 #e05555}
+.metro-play.playing{background:var(--sky);box-shadow:0 4px 0 #38b2ab}
+.metro-play.playing:hover{box-shadow:0 6px 0 #38b2ab}
+
+/* Piano bottom drawer */
+#piano-drawer{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--white);
+  border-top:2px solid var(--border);
+  box-shadow:0 -8px 32px rgba(0,0,0,0.1);
+  transform:translateY(100%);
+  transition:transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  z-index:200;
+  display:none;
+}
+#piano-drawer.open{transform:translateY(0)}
+.piano-drawer-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.65rem 1.25rem;
+  border-bottom:2px solid var(--border);
+}
+.piano-drawer-title{font-family:'Fredoka One',cursive;font-size:1rem;color:var(--text)}
+.piano-drawer-close{background:none;border:none;cursor:pointer;font-size:1rem;color:var(--muted);transition:color 0.15s}
+.piano-drawer-close:hover{color:var(--coral)}
+.piano-drawer-body{padding:0.75rem 1.25rem 1rem;overflow-x:auto}
+.piano-hint{font-size:0.72rem;font-weight:800;color:var(--muted);margin-bottom:0.6rem}
+.piano-wrap{overflow-x:auto;padding-bottom:0.25rem}
+.piano{display:flex;position:relative;height:140px;width:max-content;user-select:none}
+.key-w{width:40px;height:140px;background:#fff;border:2px solid #d0d7e2;border-radius:0 0 10px 10px;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;font-size:0.65rem;font-weight:800;color:#ccc;transition:background 0.08s;position:relative;z-index:1;margin-right:1px}
+.key-w:hover,.key-w.pressed{background:var(--coral-lt);border-color:var(--coral)}
+.key-b{width:26px;height:86px;background:#2d3436;border-radius:0 0 7px 7px;cursor:pointer;position:absolute;z-index:2;top:0;transition:background 0.08s;box-shadow:0 4px 6px rgba(0,0,0,0.3)}
+.key-b:hover,.key-b.pressed{background:var(--coral)}
+.piano-octave{font-size:0.7rem;font-weight:800;color:var(--muted);text-align:center;margin-bottom:0.5rem}
+
+/* Sync */
+.sync-drop{border:2px dashed var(--border);border-radius:var(--r);padding:2rem 1rem;text-align:center;color:var(--muted);font-weight:700;font-size:0.9rem;cursor:pointer;transition:all 0.2s;margin-bottom:1rem;display:block}
+.sync-drop:hover{border-color:var(--sky);color:var(--sky);background:var(--sky-lt)}
+.sync-drop input{display:none}
+.sync-track{background:var(--bg);border:2px solid var(--border);border-radius:var(--r);padding:0.85rem;margin-bottom:0.75rem;display:none}
+.sync-track.loaded{display:block}
+.track-name{font-weight:800;font-size:0.85rem;margin-bottom:0.5rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sync-progress{width:100%;accent-color:var(--sky);margin:0.5rem 0}
+.sync-btns{display:flex;gap:0.5rem}
+.sync-btn{flex:1;padding:0.6rem;border-radius:var(--r);border:2px solid var(--border);background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+.sync-btn:hover{border-color:var(--sky);color:var(--sky)}
+.sync-btn.primary{background:var(--sky);border-color:var(--sky);color:#fff}
+.sync-btn.primary:hover{opacity:0.88}
+.pitch-row{display:flex;align-items:center;gap:0.75rem;margin-top:0.75rem}
+.pitch-label{font-size:0.75rem;font-weight:800;color:var(--muted);white-space:nowrap;min-width:42px}
+.pitch-slider{flex:1;accent-color:var(--purple)}
+.pitch-val{font-size:0.8rem;font-weight:800;color:var(--purple);width:36px;text-align:right}
+
+/* PDF */
+#pdf-canvas-wrap{position:relative;border:2px solid var(--border);border-radius:var(--r);overflow:hidden;background:#f8f8f8;margin-bottom:0.75rem}
+#pdf-canvas{display:block;width:100%}
+#annotation-canvas{position:absolute;top:0;left:0;width:100%;height:100%;cursor:crosshair}
+.pdf-toolbar{display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.75rem}
+.pdf-tool{padding:0.4rem 0.7rem;border-radius:var(--r);border:2px solid var(--border);background:var(--bg);font-family:'Nunito',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.15s;color:var(--text)}
+.pdf-tool:hover{border-color:var(--coral);color:var(--coral)}
+.pdf-tool.active{background:var(--coral);border-color:var(--coral);color:#fff}
+.color-swatch{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform 0.15s}
+.color-swatch:hover{transform:scale(1.2)}
+.color-swatch.active{border-color:var(--text)}
+
+/* Controls */
+.controls{flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:0.6rem;padding:1rem 1.25rem;background:var(--white);border-top:2px solid var(--border);flex-wrap:wrap}
+.ctrl{width:52px;height:52px;border-radius:50%;border:2px solid var(--border);background:var(--bg);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;position:relative;box-shadow:0 3px 0 var(--border);top:0}
+.ctrl:hover{top:-2px;box-shadow:0 5px 0 #d0d7e2;border-color:#d0d7e2}
+.ctrl:active{top:1px;box-shadow:0 2px 0 var(--border)}
+.ctrl.off{background:var(--coral-lt);border-color:var(--coral);color:var(--coral);box-shadow:0 3px 0 #e8a0a0}
+.ctrl.end{width:60px;height:60px;background:var(--coral);border-color:var(--coral);color:#fff;font-size:1.25rem;box-shadow:0 4px 0 #e05555}
+.ctrl.end:hover{top:-2px;box-shadow:0 6px 0 #e05555}
+
+/* Empty / waiting */
+.empty-tile{border-radius:var(--r-lg);border:2px dashed var(--border);aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;color:var(--muted);font-size:0.85rem;font-weight:700}
+.empty-tile .big{font-size:2rem}
+
+/* Toast */
+.toast{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--text);color:#fff;border-radius:100px;padding:0.65rem 1.25rem;font-size:0.85rem;font-weight:700;z-index:9999;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;box-shadow:var(--shadow-lg)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--coral);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- LOBBY -->
+<div id="lobby">
+  <div class="note-bg">🎵 🎸 🎹 🎺 🎻 🥁 🎷 🎵 🎸 🎹 🎺 🎻 🥁 🎷 🎵 🎸 🎹 🎺 🎻 🥁</div>
+  <div class="lobby-wrap">
+    <div class="lobby-hero">
+      <span class="hero-icon">🎵</span>
+      <div class="hero-title">Tune<span>room</span></div>
+      <div class="hero-sub">Music lessons that actually<br>sound like music</div>
+      <div class="hero-badges">
+        <div class="badge">🎵 Music-grade audio</div>
+        <div class="badge">📄 Sheet music + annotation</div>
+        <div class="badge">🥁 Built-in metronome</div>
+        <div class="badge">🎹 Virtual piano</div>
+        <div class="badge">🎚 Sync mode</div>
+        <div class="badge">🖥 Screen share</div>
+      </div>
+    </div>
+    <div class="lobby-card">
+      <div class="card-title">Jump in 🎸</div>
+      <div class="card-sub">No account needed — just a name and a room code</div>
+      <div class="field-label">Your name</div>
+      <input class="field" id="nameInput" placeholder="e.g. Pepe" type="text"/>
+      <div class="field-label">Room code</div>
+      <input class="field" id="roomInput" placeholder="e.g. worship-team" type="text"/>
+      <label class="audio-row" for="musicMode">
+        <div class="toggle">
+          <input type="checkbox" id="musicMode" checked/>
+          <label for="musicMode"></label>
+        </div>
+        <div class="audio-info">
+          <strong>🎵 Music Mode</strong>
+          <small>Full-frequency audio — disables noise suppression &amp; echo cancellation</small>
+        </div>
+      </label>
+      <button class="btn-enter" onclick="enterRoom()">Enter Room →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ROOM -->
+<div id="room">
+  <div class="room-header">
+    <div class="room-logo">Tune<span>room</span> 🎵</div>
+    <div class="room-code" onclick="copyCode()" id="codeDisplay">🔗 room</div>
+    <div style="display:flex;align-items:center;gap:0.5rem;margin-left:auto">
+      <div class="audio-pill" id="audioPill">VOICE</div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <button class="tool-btn" id="tb-metro" onclick="togglePanel('metro')">🥁 Metronome</button>
+    <button class="tool-btn" id="tb-piano" onclick="togglePianoDrawer()">🎹 Piano</button>
+    <button class="tool-btn" id="tb-sync"  onclick="togglePanel('sync')">🎚 Sync Mode</button>
+    <button class="tool-btn" id="tb-pdf"   onclick="togglePanel('pdf')">📄 Sheet Music</button>
+    <button class="tool-btn" id="tb-screen" onclick="toggleScreen()">🖥 Screen Share</button>
+  </div>
+  <div class="room-main">
+    <div class="video-grid" id="videoGrid">
+      <div class="video-tile local" id="local-tile">
+        <div class="avatar-bg" id="localAvatar">
+          <div class="avatar-circle" id="localInitial">?</div>
+        </div>
+        <video id="localVideo" autoplay muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none"></video>
+        <div class="tile-muted" id="localMuted">🔇</div>
+        <div class="tile-name"><span>🟢</span><span id="localNameLabel">You</span></div>
+      </div>
+      <div class="empty-tile" id="waitingTile">
+        <div class="big">👋</div>
+        <div>Share the room code to invite someone!</div>
+      </div>
+    </div>
+    <div class="side-panel" id="sidePanel">
+      <div class="panel-header">
+        <div class="panel-title" id="panelTitle">Panel</div>
+        <button class="panel-close" onclick="closePanel()">✕</button>
+      </div>
+      <div class="panel-body" id="panelBody"></div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="ctrl" id="micBtn" onclick="toggleMic()" title="Mute">🎤</button>
+    <button class="ctrl" id="camBtn" onclick="toggleCam()" title="Camera">📷</button>
+    <button class="ctrl end" onclick="endCall()" title="Leave">📵</button>
+  </div>
+</div>
+
+<!-- Piano bottom drawer -->
+<div id="piano-drawer">
+  <div class="piano-drawer-header">
+    <div class="piano-drawer-title">🎹 Virtual Piano</div>
+    <div style="display:flex;align-items:center;gap:1rem">
+      <span class="piano-hint">A=C4 · W=C#4 · S=D4 · E=D#4 · D=E4 · F=F4 · T=F#4 · G=G4 · Y=G#4 · H=A4 · U=A#4 · J=B4</span>
+      <button class="piano-drawer-close" onclick="closePianoDrawer()">✕</button>
+    </div>
+  </div>
+  <div class="piano-drawer-body">
+    <div class="piano-wrap"><div class="piano" id="pianoKeys"></div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// STATE
+let socket, localStream, screenStream;
+let peerConnections = {};
+let myName='', myRoom='', isMusicMode=false;
+let micMuted=false, camOff=false, screenSharing=false;
+let currentPanel=null;
+
+// Metronome
+let audioCtx, metroInterval, metroPlaying=false, bpm=120, beatCount=0, beatsPerBar=4;
+
+// Piano
+let pianoCtx=null;
+
+// Sync
+let syncAudio=null, syncTrackName='';
+
+// PDF/annotation
+let pdfDoc=null, pdfPageNum=1, pdfPageCount=0;
+let annotColor='#ff6b6b', annotTool='pen';
+let annotCtx, isDrawing=false, lastX=0, lastY=0;
+
+const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
+const NOTES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+// LOBBY
+async function enterRoom(){
+  myName  = document.getElementById('nameInput').value.trim()||'Musician';
+  myRoom  = document.getElementById('roomInput').value.trim().toLowerCase().replace(/\s+/g,'-')||'main-room';
+  isMusicMode = document.getElementById('musicMode').checked;
+  document.getElementById('lobby').style.display='none';
+  document.getElementById('room').style.display='flex';
+  document.getElementById('codeDisplay').textContent='🔗 '+myRoom;
+  document.getElementById('localNameLabel').textContent=myName+' (you)';
+  document.getElementById('localInitial').textContent=myName[0].toUpperCase();
+  document.getElementById('audioPill').textContent=isMusicMode?'🎵 MUSIC':'🎙 VOICE';
+  document.getElementById('audioPill').className='audio-pill '+(isMusicMode?'music':'voice');
+  await startLocal();
+  connectSocket();
+}
+
+// MEDIA
+async function startLocal(){
+  const ac=isMusicMode
+    ?{echoCancellation:false,noiseSuppression:false,autoGainControl:false,sampleRate:48000,channelCount:2}
+    :{echoCancellation:true,noiseSuppression:true,autoGainControl:true};
+  try{
+    localStream=await navigator.mediaDevices.getUserMedia({audio:ac,video:{width:{ideal:1280},height:{ideal:720},facingMode:'user'}});
+    const lv=document.getElementById('localVideo');
+    lv.srcObject=localStream; lv.style.display='block';
+    document.getElementById('localAvatar').style.display='none';
+  }catch(e){showToast('⚠️ Camera/mic access denied')}
+}
+
+function toggleMic(){
+  micMuted=!micMuted;
+  localStream?.getAudioTracks().forEach(t=>t.enabled=!micMuted);
+  const btn=document.getElementById('micBtn');
+  btn.textContent=micMuted?'🔇':'🎤'; btn.classList.toggle('off',micMuted);
+  document.getElementById('localMuted').classList.toggle('show',micMuted);
+}
+
+function toggleCam(){
+  camOff=!camOff;
+  localStream?.getVideoTracks().forEach(t=>t.enabled=!camOff);
+  const btn=document.getElementById('camBtn');
+  btn.textContent=camOff?'🚫':'📷'; btn.classList.toggle('off',camOff);
+  document.getElementById('localVideo').style.display=camOff?'none':'block';
+  document.getElementById('localAvatar').style.display=camOff?'flex':'none';
+}
+
+async function toggleScreen(){
+  if(!screenSharing){
+    try{
+      screenStream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:false});
+      const track=screenStream.getVideoTracks()[0];
+      Object.values(peerConnections).forEach(pc=>{
+        const s=pc.getSenders().find(s=>s.track?.kind==='video');
+        if(s) s.replaceTrack(track);
+      });
+      screenSharing=true;
+      document.getElementById('tb-screen').classList.add('active');
+      showToast('🖥 Screen sharing started');
+      track.onended=stopScreen;
+    }catch(e){showToast('Screen share cancelled')}
+  } else stopScreen();
+}
+
+function stopScreen(){
+  screenStream?.getTracks().forEach(t=>t.stop());
+  screenSharing=false;
+  document.getElementById('tb-screen').classList.remove('active');
+  const cam=localStream?.getVideoTracks()[0];
+  if(cam) Object.values(peerConnections).forEach(pc=>{
+    const s=pc.getSenders().find(s=>s.track?.kind==='video');
+    if(s) s.replaceTrack(cam);
+  });
+  showToast('🖥 Screen sharing stopped');
+}
+
+// WEBRTC
+function connectSocket(){
+  socket=io();
+  socket.on('connect',()=>socket.emit('join-room',{roomId:myRoom,userName:myName}));
+  socket.on('room-peers',async peers=>{for(const p of peers) await makeOffer(p.id,p.userName)});
+  socket.on('peer-joined',({id,userName})=>showToast('🎵 '+userName+' joined!'));
+  socket.on('offer',async({from,userName,offer})=>await makeAnswer(from,userName,offer));
+  socket.on('answer',async({from,answer})=>{const pc=peerConnections[from];if(pc)await pc.setRemoteDescription(new RTCSessionDescription(answer))});
+  socket.on('ice-candidate',async({from,candidate})=>{const pc=peerConnections[from];if(pc&&candidate)try{await pc.addIceCandidate(new RTCIceCandidate(candidate))}catch(e){}});
+  socket.on('peer-left',({id})=>removePeer(id));
+}
+
+function buildPC(peerId,userName){
+  const pc=new RTCPeerConnection(ICE);
+  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+  pc.onicecandidate=({candidate})=>{if(candidate) socket.emit('ice-candidate',{to:peerId,candidate})};
+  pc.ontrack=({streams})=>{tuneOpus(pc);addRemoteTile(peerId,userName,streams[0])};
+  pc.onconnectionstatechange=()=>{if(['disconnected','failed'].includes(pc.connectionState)) removePeer(peerId)};
+  peerConnections[peerId]=pc; return pc;
+}
+
+function tuneOpus(pc){
+  pc.getTransceivers().forEach(t=>{
+    if(t.sender.track?.kind==='audio'){
+      const p=t.sender.getParameters();
+      if(p.encodings){p.encodings.forEach(e=>{e.maxBitrate=510000});t.sender.setParameters(p).catch(()=>{})}
+    }
+  });
+}
+
+async function makeOffer(peerId,userName){
+  const pc=buildPC(peerId,userName);
+  const offer=await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  socket.emit('offer',{to:peerId,offer});
+}
+
+async function makeAnswer(peerId,userName,offer){
+  const pc=buildPC(peerId,userName);
+  await pc.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer=await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  socket.emit('answer',{to:peerId,answer});
+}
+
+function addRemoteTile(peerId,userName,stream){
+  if(document.getElementById('tile-'+peerId)) return;
+  document.getElementById('waitingTile').style.display='none';
+  const tile=document.createElement('div');
+  tile.className='video-tile'; tile.id='tile-'+peerId;
+  const avBg=document.createElement('div'); avBg.className='avatar-bg';
+  const avC=document.createElement('div'); avC.className='avatar-circle';
+  avC.style.background=rndColor(); avC.textContent=userName[0].toUpperCase();
+  avBg.appendChild(avC);
+  const vid=document.createElement('video');
+  vid.autoplay=true; vid.playsinline=true; vid.srcObject=stream;
+  vid.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
+  vid.onloadeddata=()=>{avBg.style.display='none'; vid.style.display='block'};
+  const nm=document.createElement('div'); nm.className='tile-name';
+  nm.innerHTML='<span>🔵</span><span>'+userName+'</span>';
+  tile.append(avBg,vid,nm);
+  document.getElementById('videoGrid').appendChild(tile);
+}
+
+function removePeer(peerId){
+  peerConnections[peerId]?.close(); delete peerConnections[peerId];
+  document.getElementById('tile-'+peerId)?.remove();
+  if(!Object.keys(peerConnections).length) document.getElementById('waitingTile').style.display='flex';
+  showToast('👋 Someone left');
+}
+
+function endCall(){
+  Object.values(peerConnections).forEach(p=>p.close());
+  localStream?.getTracks().forEach(t=>t.stop());
+  screenStream?.getTracks().forEach(t=>t.stop());
+  socket?.disconnect(); stopMetro(); location.reload();
+}
+
+// PANELS
+const PANEL_TITLES={metro:'🥁 Metronome',sync:'🎚 Sync Mode',pdf:'📄 Sheet Music'};
+function togglePanel(name){
+  const panel=document.getElementById('sidePanel');
+  if(currentPanel===name){closePanel();return}
+  currentPanel=name; panel.classList.add('open');
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tb-'+name)?.classList.add('active');
+  document.getElementById('panelTitle').textContent=PANEL_TITLES[name]||name;
+  document.getElementById('panelBody').innerHTML='';
+  ({metro:buildMetroPanel,piano:buildPianoPanel,sync:buildSyncPanel,pdf:buildPdfPanel}[name])?.();
+}
+function closePanel(){
+  document.getElementById('sidePanel').classList.remove('open');
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  currentPanel=null;
+}
+
+// METRONOME
+function buildMetroPanel(){
+  document.getElementById('panelBody').innerHTML=`
+    <div class="metro-bpm" id="bpmNum">120</div>
+    <div class="metro-unit">BPM</div>
+    <input type="range" class="metro-slider" id="bpmSlider" min="40" max="240" value="120" oninput="setBPM(this.value)"/>
+    <div style="display:flex;justify-content:space-between;font-size:0.72rem;font-weight:700;color:var(--muted);margin-bottom:1rem"><span>40</span><span>240</span></div>
+    <div class="beats-row" id="beatsRow">${[0,1,2,3].map(i=>`<div class="beat-dot" id="bd${i}"></div>`).join('')}</div>
+    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+      <span style="font-size:0.75rem;font-weight:800;color:var(--muted)">BEATS/BAR</span>
+      <input type="range" style="flex:1;accent-color:var(--coral)" min="2" max="8" value="4" oninput="setBeats(this.value)"/>
+      <span style="font-size:0.8rem;font-weight:800;color:var(--coral)" id="beatsVal">4</span>
+    </div>
+    <button class="metro-play" id="metroPlayBtn" onclick="toggleMetro()">▶ Start</button>`;
+}
+function setBPM(v){bpm=parseInt(v);document.getElementById('bpmNum').textContent=bpm;if(metroPlaying){stopMetro();startMetro()}}
+function setBeats(v){beatsPerBar=parseInt(v);document.getElementById('beatsVal').textContent=v;const r=document.getElementById('beatsRow');if(r)r.innerHTML=[...Array(beatsPerBar)].map((_,i)=>`<div class="beat-dot" id="bd${i}"></div>`).join('')}
+function toggleMetro(){if(metroPlaying){stopMetro();document.getElementById('metroPlayBtn').textContent='▶ Start';document.getElementById('metroPlayBtn').classList.remove('playing')}else{startMetro();document.getElementById('metroPlayBtn').textContent='⏹ Stop';document.getElementById('metroPlayBtn').classList.add('playing')}}
+function startMetro(){
+  metroPlaying=true; beatCount=0;
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  const ms=(60/bpm)*1000;
+  function tick(){
+    const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+    osc.connect(gain);gain.connect(audioCtx.destination);
+    const accent=beatCount%beatsPerBar===0;
+    osc.frequency.value=accent?1400:900;
+    gain.gain.setValueAtTime(accent?0.5:0.3,audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.06);
+    osc.start(audioCtx.currentTime);osc.stop(audioCtx.currentTime+0.06);
+    document.querySelectorAll('.beat-dot').forEach((d,i)=>d.classList.toggle('on',i===beatCount%beatsPerBar));
+    beatCount++;
+  }
+  tick(); metroInterval=setInterval(tick,ms);
+}
+function stopMetro(){metroPlaying=false;clearInterval(metroInterval);document.querySelectorAll('.beat-dot').forEach(d=>d.classList.remove('on'))}
+
+// PIANO DRAWER
+function togglePianoDrawer(){
+  const drawer=document.getElementById('piano-drawer');
+  const btn=document.getElementById('tb-piano');
+  const isOpen=drawer.classList.contains('open');
+  if(isOpen){ closePianoDrawer(); return; }
+  drawer.style.display='block';
+  requestAnimationFrame(()=>drawer.classList.add('open'));
+  btn.classList.add('active');
+  if(!pianoCtx) pianoCtx=new (window.AudioContext||window.webkitAudioContext)();
+  renderPiano();
+  currentPanel = currentPanel==='piano'?currentPanel:currentPanel; // don't close other panels
+}
+function closePianoDrawer(){
+  const drawer=document.getElementById('piano-drawer');
+  drawer.classList.remove('open');
+  document.getElementById('tb-piano').classList.remove('active');
+  setTimeout(()=>{if(!drawer.classList.contains('open'))drawer.style.display='none'},300);
+}
+function renderPiano(){
+  const el=document.getElementById('pianoKeys'); if(!el) return;
+  el.innerHTML=''; let wIdx=0;
+  for(let oct=3;oct<=5;oct++){
+    for(let n=0;n<12;n++){
+      const note=NOTES[n],isBlack=note.includes('#');
+      if(!isBlack){
+        const k=document.createElement('div'); k.className='key-w';
+        k.dataset.freq=m2f(oct*12+n+12); k.innerHTML=`<span>${note}</span>`;
+        k.onmousedown=()=>playNote(+k.dataset.freq,k); k.onmouseup=()=>k.classList.remove('pressed');
+        el.appendChild(k); wIdx++;
+      } else {
+        const k=document.createElement('div'); k.className='key-b';
+        k.dataset.freq=m2f(oct*12+n+12);
+        k.onmousedown=()=>playNote(+k.dataset.freq,k); k.onmouseup=()=>k.classList.remove('pressed');
+        k.style.left=((wIdx-1)*41+27)+'px';
+        el.appendChild(k);
+      }
+    }
+  }
+}
+function m2f(midi){return 440*Math.pow(2,(midi-69)/12)}
+function playNote(freq,el){
+  if(!pianoCtx) return;
+  el.classList.add('pressed');
+  const osc=pianoCtx.createOscillator(),gain=pianoCtx.createGain();
+  osc.type='triangle'; osc.frequency.value=freq;
+  gain.gain.setValueAtTime(0.4,pianoCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001,pianoCtx.currentTime+1.2);
+  osc.connect(gain);gain.connect(pianoCtx.destination);
+  osc.start();osc.stop(pianoCtx.currentTime+1.2);
+  setTimeout(()=>el.classList.remove('pressed'),200);
+}
+const keyMap={'a':'C4','w':'C#4','s':'D4','e':'D#4','d':'E4','f':'F4','t':'F#4','g':'G4','y':'G#4','h':'A4','u':'A#4','j':'B4','k':'C5'};
+document.addEventListener('keydown',e=>{
+  if(currentPanel!=='piano') return;
+  const note=keyMap[e.key.toLowerCase()]; if(!note) return;
+  const oct=parseInt(note.slice(-1)),nm=note.slice(0,-1),midi=NOTES.indexOf(nm)+oct*12+12,freq=m2f(midi);
+  document.querySelectorAll('.key-w,.key-b').forEach(k=>{if(Math.abs(+k.dataset.freq-freq)<0.1)playNote(freq,k)});
+});
+
+// SYNC MODE
+function buildSyncPanel(){
+  document.getElementById('panelBody').innerHTML=`
+    <p style="font-size:0.82rem;color:var(--muted);font-weight:700;margin-bottom:1rem;line-height:1.5">Upload a backing track. Control pitch and tempo — perfect for practice at different speeds or keys.</p>
+    <label class="sync-drop"><input type="file" accept="audio/*" onchange="loadSyncTrack(this)"/>🎵 Click to load audio file</label>
+    <div class="sync-track" id="syncTrack">
+      <div class="track-name" id="trackName">No track</div>
+      <input type="range" class="sync-progress" id="syncProgress" min="0" max="100" value="0" oninput="seekSync(this.value)"/>
+      <div style="display:flex;justify-content:space-between;font-size:0.75rem;font-weight:700;color:var(--muted);margin-bottom:0.5rem">
+        <span id="syncTime">0:00</span><span id="syncDuration">0:00</span>
+      </div>
+      <div class="sync-btns">
+        <button class="sync-btn primary" id="syncPlayBtn" onclick="toggleSync()">▶ Play</button>
+        <button class="sync-btn" onclick="restartSync()">⏮ Restart</button>
+      </div>
+      <div class="pitch-row">
+        <span class="pitch-label">Pitch</span>
+        <input type="range" class="pitch-slider" id="pitchSlider" min="-6" max="6" step="0.5" value="0" oninput="setPitch(this.value)"/>
+        <span class="pitch-val" id="pitchVal">0</span>
+      </div>
+      <div class="pitch-row" style="margin-top:0.5rem">
+        <span class="pitch-label">Tempo</span>
+        <input type="range" class="pitch-slider" id="tempoSlider" min="0.5" max="2" step="0.05" value="1" oninput="setTempo(this.value)"/>
+        <span class="pitch-val" id="tempoVal">1×</span>
+      </div>
+    </div>`;
+  if(syncAudio){document.getElementById('syncTrack').classList.add('loaded');document.getElementById('trackName').textContent=syncTrackName}
+}
+function loadSyncTrack(input){
+  const file=input.files[0]; if(!file) return;
+  syncTrackName=file.name;
+  if(syncAudio){syncAudio.pause();syncAudio=null}
+  syncAudio=new Audio(URL.createObjectURL(file));
+  syncAudio.ontimeupdate=updateSyncUI;
+  document.getElementById('syncTrack').classList.add('loaded');
+  document.getElementById('trackName').textContent=file.name;
+  showToast('🎵 Track loaded!');
+}
+function toggleSync(){if(!syncAudio)return;if(syncAudio.paused){syncAudio.play();document.getElementById('syncPlayBtn').textContent='⏸ Pause'}else{syncAudio.pause();document.getElementById('syncPlayBtn').textContent='▶ Play'}}
+function restartSync(){if(syncAudio){syncAudio.currentTime=0;syncAudio.play();document.getElementById('syncPlayBtn').textContent='⏸ Pause'}}
+function seekSync(v){if(syncAudio)syncAudio.currentTime=(v/100)*syncAudio.duration}
+function updateSyncUI(){
+  if(!syncAudio||!syncAudio.duration)return;
+  const pct=(syncAudio.currentTime/syncAudio.duration)*100;
+  const p=document.getElementById('syncProgress');if(p)p.value=pct;
+  const t=document.getElementById('syncTime'),d=document.getElementById('syncDuration');
+  if(t)t.textContent=fmt(syncAudio.currentTime);if(d)d.textContent=fmt(syncAudio.duration);
+}
+function setPitch(v){document.getElementById('pitchVal').textContent=v;if(syncAudio)syncAudio.playbackRate=Math.pow(2,+v/12)*(+document.getElementById('tempoSlider')?.value||1)}
+function setTempo(v){document.getElementById('tempoVal').textContent=(+v).toFixed(2)+'×';if(syncAudio)syncAudio.playbackRate=+v*Math.pow(2,(+document.getElementById('pitchSlider')?.value||0)/12)}
+function fmt(s){const m=Math.floor(s/60);return `${m}:${String(Math.floor(s%60)).padStart(2,'0')}`}
+
+// PDF + ANNOTATION
+function buildPdfPanel(){
+  document.getElementById('panelBody').innerHTML=`
+    <label class="sync-drop" id="pdfDrop"><input type="file" accept=".pdf,image/*" onchange="loadPdfFile(this)"/>📄 Drop PDF or image here</label>
+    <div id="pdfControls" style="display:none">
+      <div class="pdf-toolbar">
+        <button class="pdf-tool active" onclick="setAnnotTool('pen',this)">✏️ Pen</button>
+        <button class="pdf-tool" onclick="setAnnotTool('erase',this)">🧹 Erase</button>
+        <button class="pdf-tool" onclick="clearAnnotation()">🗑 Clear</button>
+      </div>
+      <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.75rem">
+        <span style="font-size:0.72rem;font-weight:800;color:var(--muted)">COLOR</span>
+        ${['#ff6b6b','#4ecdc4','#ffe66d','#c77dff','#2d3436'].map(c=>`<div class="color-swatch${c===annotColor?' active':''}" style="background:${c}" onclick="setAnnotColor('${c}',this)"></div>`).join('')}
+        <input type="range" style="flex:1;accent-color:var(--coral)" min="1" max="14" value="3" id="brushSize"/>
+      </div>
+      <div id="pdf-canvas-wrap">
+        <canvas id="pdf-canvas"></canvas>
+        <canvas id="annotation-canvas"></canvas>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.5rem;align-items:center" id="pdfNav">
+        <button class="sync-btn" onclick="pdfPage(-1)">◀</button>
+        <span id="pdfPageInfo" style="flex:1;text-align:center;font-size:0.8rem;font-weight:800;color:var(--muted)">Page 1/1</span>
+        <button class="sync-btn" onclick="pdfPage(1)">▶</button>
+      </div>
+    </div>`;
+}
+
+async function loadPdfFile(input){
+  const file=input.files[0]; if(!file) return;
+  document.getElementById('pdfDrop').style.display='none';
+  document.getElementById('pdfControls').style.display='block';
+  if(file.type==='application/pdf'){
+    if(!window.pdfjsLib){
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+    pdfDoc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+    pdfPageCount=pdfDoc.numPages; pdfPageNum=1;
+    await renderPdfPage();
+  } else {
+    const img=new Image(); img.src=URL.createObjectURL(file);
+    img.onload=()=>{
+      const c=document.getElementById('pdf-canvas');
+      c.width=img.width; c.height=img.height;
+      c.getContext('2d').drawImage(img,0,0);
+      c.style.width='100%';
+      initAnnotCanvas();
+      document.getElementById('pdfNav').style.display='none';
+    };
+  }
+}
+
+async function renderPdfPage(){
+  if(!pdfDoc) return;
+  const page=await pdfDoc.getPage(pdfPageNum);
+  const vp=page.getViewport({scale:1.5});
+  const c=document.getElementById('pdf-canvas');
+  c.width=vp.width; c.height=vp.height; c.style.width='100%';
+  await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+  document.getElementById('pdfPageInfo').textContent=`Page ${pdfPageNum}/${pdfPageCount}`;
+  initAnnotCanvas();
+}
+
+function pdfPage(dir){const n=pdfPageNum+dir;if(n<1||n>pdfPageCount)return;pdfPageNum=n;renderPdfPage()}
+
+function initAnnotCanvas(){
+  const pc=document.getElementById('pdf-canvas'),ac=document.getElementById('annotation-canvas');
+  ac.width=pc.width; ac.height=pc.height; ac.style.width='100%'; ac.style.height='100%';
+  annotCtx=ac.getContext('2d');
+  ac.onmousedown=startDraw; ac.onmousemove=doDraw; ac.onmouseup=stopDraw; ac.onmouseleave=stopDraw;
+  ac.ontouchstart=e=>{e.preventDefault();startDraw(e.touches[0])};
+  ac.ontouchmove=e=>{e.preventDefault();doDraw(e.touches[0])};
+  ac.ontouchend=stopDraw;
+}
+
+function getPos(e){
+  const ac=document.getElementById('annotation-canvas'),r=ac.getBoundingClientRect();
+  return{x:(e.clientX-r.left)*(ac.width/r.width),y:(e.clientY-r.top)*(ac.height/r.height)};
+}
+function startDraw(e){isDrawing=true;const p=getPos(e);lastX=p.x;lastY=p.y}
+function doDraw(e){
+  if(!isDrawing||!annotCtx) return;
+  const p=getPos(e);
+  annotCtx.beginPath();
+  annotCtx.globalCompositeOperation=annotTool==='erase'?'destination-out':'source-over';
+  annotCtx.strokeStyle=annotColor; annotCtx.lineWidth=annotTool==='erase'?24:+document.getElementById('brushSize')?.value||3;
+  annotCtx.lineCap='round'; annotCtx.lineJoin='round';
+  annotCtx.moveTo(lastX,lastY); annotCtx.lineTo(p.x,p.y); annotCtx.stroke();
+  lastX=p.x; lastY=p.y;
+}
+function stopDraw(){isDrawing=false}
+function setAnnotTool(t,btn){annotTool=t;document.querySelectorAll('.pdf-tool').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
+function setAnnotColor(c,el){annotColor=c;document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));el.classList.add('active')}
+function clearAnnotation(){if(annotCtx){annotCtx.globalCompositeOperation='source-over';const ac=document.getElementById('annotation-canvas');annotCtx.clearRect(0,0,ac.width,ac.height)}}
+
+// UTILS
+function copyCode(){
+  const url=window.location.origin+'?room='+myRoom;
+  navigator.clipboard.writeText(url).then(()=>showToast('🔗 Link copied!')).catch(()=>{navigator.clipboard.writeText(myRoom);showToast('✓ Room code copied!')});
+}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+function rndColor(){return['#ff6b6b','#4ecdc4','#ffe66d','#c77dff','#ff9f43','#a8e6cf'][Math.floor(Math.random()*6)]}
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+
+window.onload=()=>{
+  document.getElementById('nameInput').focus();
+  const p=new URLSearchParams(location.search);
+  if(p.get('room')) document.getElementById('roomInput').value=p.get('room');
+};
+</script>
+</body>
+</html>
